@@ -25,6 +25,7 @@ INSTALLED_APPS = [
     'mptt',
     'import_export',
     
+    'apps.user'
 ]
 
 MIDDLEWARE = [
@@ -85,7 +86,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 CORS_ALLOW_ALL_ORIGINS = True
 
-# AUTH_USER_MODEL = 'users.User'
+AUTH_USER_MODEL = 'user.CoreUser'
 
 REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
