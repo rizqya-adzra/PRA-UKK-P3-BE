@@ -25,7 +25,8 @@ INSTALLED_APPS = [
     'mptt',
     'import_export',
     
-    'apps.user'
+    'apps.user',
+    'apps.aspiration'
 ]
 
 MIDDLEWARE = [
