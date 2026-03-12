@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.base_user import BaseUserManager
+from utils.models import UUIDModel
 
 class CustomUserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
@@ -26,7 +27,7 @@ class CustomUserManager(BaseUserManager):
         return self.create_user(email, password, **extra_fields)
     
 
-class CoreUser(AbstractUser):
+class CoreUser(AbstractUser, UUIDModel):
     username = None 
     email = models.EmailField(_('email address'), unique=True)
     date_joined = None

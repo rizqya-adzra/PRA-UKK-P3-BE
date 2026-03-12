@@ -6,9 +6,7 @@ from .models import CoreUser, CoreStudent, CoreAdmin
 
 class StudentRegisterSerializer(serializers.ModelSerializer):
     nis = serializers.IntegerField(required=True)
-    name = serializers.CharField(max_length=255, required=True)
-    rombel = serializers.CharField(max_length=100, required=True)
-    rayon = serializers.CharField(max_length=100, required=True)
+    name = serializers.CharField(max_length=255, required=False, allow_blank=True)
     
     password = serializers.CharField(
         write_only=True,
@@ -22,7 +20,7 @@ class StudentRegisterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CoreUser
-        fields = ['email', 'password', 'nis', 'name', 'rombel', 'rayon']
+        fields = ['email', 'password', 'nis', 'name']
         extra_kwargs = {
             'email': {
                 'validators': [
@@ -40,9 +38,12 @@ class StudentRegisterSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         nis = validated_data.pop('nis')
-        name = validated_data.pop('name')
-        rombel = validated_data.pop('rombel')
-        rayon = validated_data.pop('rayon')
+        name = validated_data.pop('name', None)
+        email = validated_data.get('email')
+        
+        name = validated_data.pop('name', None)
+        if not name:
+            name = email.split('@')[0]
 
         with transaction.atomic():
             user = CoreUser.objects.create_user(**validated_data)
@@ -51,8 +52,6 @@ class StudentRegisterSerializer(serializers.ModelSerializer):
                 user=user,
                 nis=nis,
                 name=name,
-                rombel=rombel,
-                rayon=rayon
             )
         return user
 
