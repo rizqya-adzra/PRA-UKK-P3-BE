@@ -8,12 +8,12 @@ class AspirationProgressInline(admin.TabularInline):
 
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
-    list_display = ('name', 'description', 'created_at')
+    list_display = ('name', 'id', 'description', 'created_at')
     search_fields = ('name',)
 
 @admin.register(Aspiration)
 class AspirationAdmin(admin.ModelAdmin):
-    list_display = ('report_id', 'user', 'title', 'category', 'status', 'created_at')
+    list_display = ('report_id', 'id', 'user', 'title', 'category', 'status', 'created_at')
     list_filter = ('status', 'category', 'created_at')
     search_fields = ('report_id', 'title', 'user__email', 'description')
     readonly_fields = ('report_id', 'created_at', 'updated_at')

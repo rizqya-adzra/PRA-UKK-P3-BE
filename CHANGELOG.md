@@ -13,3 +13,9 @@
 ### V1.0.3
 - added aspiration app in ./apps/aspiration/
 - added serializers, admin, signals, and view in ./apps/aspiration/
+
+### V1.0.4
+- modified admin, apps, serializers, signals in ./apps/aspiration/
+- added views (aspirations, categories, notifications) and urls in ./apps/aspiration/
+- modified urls in ./config/urls.py
+- modified response in ./utils/response.py
