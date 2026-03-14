@@ -19,3 +19,7 @@
 - added views (aspirations, categories, notifications) and urls in ./apps/aspiration/
 - modified urls in ./config/urls.py
 - modified response in ./utils/response.py
+
+### V1.0.5
+- modified views (aspirations, categories, notifications) and urls in ./apps/aspiration/
+- added and modified serializers (aspirations, categories, notifications) in ./apps/aspiration/

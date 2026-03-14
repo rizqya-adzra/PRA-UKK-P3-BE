@@ -30,3 +30,26 @@ class NotificationReadView(generics.GenericAPIView):
             return response_success(message="Notifikasi ditandai telah dibaca")
         except Notification.DoesNotExist:
             return response_error(message="Notifikasi tidak ditemukan", status_code=status.HTTP_404_NOT_FOUND)
+        
+class NotificationDetailDestroyView(generics.RetrieveDestroyAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = NotificationSerializer
+
+    def get_queryset(self):
+        return Notification.objects.filter(user=self.request.user)
+
+    def retrieve(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            serializer = self.get_serializer(instance)
+            return response_success(message="Detail notifikasi ditemukan", data=serializer.data)
+        except Exception as e:
+            return response_error(message="Notifikasi tidak ditemukan", status_code=status.HTTP_404_NOT_FOUND)
+
+    def destroy(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            instance.delete()
+            return response_success(message="Notifikasi berhasil dihapus")
+        except Exception as e:
+            return response_error(message="Notifikasi tidak ditemukan atau gagal dihapus", status_code=status.HTTP_404_NOT_FOUND)
