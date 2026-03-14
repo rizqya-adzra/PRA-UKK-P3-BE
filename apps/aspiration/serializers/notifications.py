@@ -8,11 +8,12 @@ class NotificationSerializer(serializers.ModelSerializer):
     
     student_info = serializers.SerializerMethodField()
     student = serializers.CharField(source='aspiration.user.email', read_only=True)
+    student_image = serializers.ImageField(source='user.image', read_only=True)
     
     class Meta:
         model = Notification
         fields = [
-            'id',  'report_id', 'message', 'student', 'student_info',
+            'id',  'report_id', 'message', 'student', 'student_image', 'student_info',
             'aspiration_title', 'aspiration_description', 
             'is_read', 'created_at'
         ]
@@ -26,7 +27,6 @@ class NotificationSerializer(serializers.ModelSerializer):
                 "nis": student_profile.nis,
                 "rombel": student_profile.rombel,
                 "rayon": student_profile.rayon,
-                # "image": student.image.url if student.image else None
             }
         except:
             return None

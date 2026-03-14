@@ -27,3 +27,7 @@
 ### V1.0.6
 - added change password
 - modified Coreuser model to have image field
+
+### V1.0.7
+- modified models to folder in ./apps/aspiration/
+- added AspirationFile model for user to upload attachment in ./apps/aspiration/

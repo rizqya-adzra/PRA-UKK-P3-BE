@@ -1,10 +1,36 @@
+import os 
 from rest_framework import serializers
 from apps.aspiration.serializers.categories import CategorySerializer
-from apps.aspiration.models import Category, Aspiration, AspirationProgress
+from apps.aspiration.models import Category, Aspiration, AspirationProgress, AspirationFile
+
+
+class AspirationFileSerializer(serializers.ModelSerializer):
+    file_type = serializers.SerializerMethodField()
+
+    class Meta:
+        model = AspirationFile
+        fields = ['id', 'file', 'file_type']
+
+    def validate_file(self, value):
+        limit = 5 * 1024 * 1024
+        if value.size > limit:
+            raise serializers.ValidationError("Ukuran file tidak boleh lebih dari 5MB.")
+        return value
+
+    def get_file_type(self, obj):
+        if not obj.file: 
+            return None
+        ext = os.path.splitext(obj.file.name)[1].lower()
+        if ext in ['.jpg', '.jpeg', '.png', '.webp']: return 'image'
+        if ext in ['.mp4', '.mov']: return 'video'
+        if ext in ['.pdf', '.doc', '.docx']: return 'document'
+        return 'other'
 
 
 class AspirationProgressSerializer(serializers.ModelSerializer):
     admin_name = serializers.CharField(source='admin.email', read_only=True)
+    
+    attachments = AspirationFileSerializer(many=True, read_only=True, source='progress_attachments')
     
     status = serializers.ChoiceField(
         choices=Aspiration.STATUS_CHOICES,
@@ -24,15 +50,19 @@ class AspirationProgressSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = AspirationProgress
-        fields = ['id', 'aspiration', 'admin_name', 'status', 'description', 'created_at']
+        fields = ['id', 'aspiration', 'admin_name', 'status', 'description', 'attachments', 'created_at']
         read_only_fields = ['id', 'created_at']
 
 
 class AspirationSerializer(serializers.ModelSerializer):
     category_detail = CategorySerializer(source='category', read_only=True)
     progress_updates = AspirationProgressSerializer(many=True, read_only=True)
-    student_info = serializers.SerializerMethodField()
     
+    attachments = AspirationFileSerializer(many=True, read_only=True)
+    
+    student_info = serializers.SerializerMethodField()
+    student_image = serializers.ImageField(source='user.image', read_only=True)
+
     category_id = serializers.PrimaryKeyRelatedField(
         queryset=Category.objects.all(),
         source='category',
@@ -75,10 +105,11 @@ class AspirationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Aspiration
         fields = [
-            'id', 'report_id', 'student', 'student_info', 'title', 'description', 'location',
+            'id', 'report_id', 'student', 'student_image', 'student_info', 'title', 'description', 'location',
             'category_id', 'category_detail', 
+            'attachments', 
             'status', 'status_display', 'status_color',
-            'image', 'video', 'progress_updates', 'created_at'
+            'progress_updates', 'created_at'
         ]
         read_only_fields = ['id', 'report_id', 'status', 'created_at']
 
@@ -99,7 +130,6 @@ class AspirationSerializer(serializers.ModelSerializer):
                 "nis": student.nis,
                 "rombel": student.rombel,
                 "rayon": student.rayon,
-                # "image": student.image.url if student.image else None
             }
         except:
             return None

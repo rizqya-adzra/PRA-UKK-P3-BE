@@ -28,7 +28,7 @@ class AspirationListCreateView(generics.ListCreateAPIView):
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
-            serializer.save(user=self.request.user, status='Menunggu')
+            serializer.save(user=self.request.user, status='menunggu')
             return response_success(
                 message="Aspirasi berhasil dikirim",
                 data=serializer.data,
@@ -93,6 +93,15 @@ class AspirationProgressListCreateView(generics.ListCreateAPIView):
 
     def get_queryset(self):
         return AspirationProgress.objects.all()
+    
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        
+        if not queryset.exists():
+             return response_success(message="Belum ada data Progress Aspirasi", data=[])
+
+        serializer = self.get_serializer(queryset, many=True)
+        return response_success(message="List semua data Progress Aspirasi", data=serializer.data)
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)

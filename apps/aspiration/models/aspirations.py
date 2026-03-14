@@ -2,19 +2,9 @@ from django.db import models
 from apps.user.models import CoreUser
 from utils.models import UUIDModel
 from utils.report_id import generate_report_id
+from apps.aspiration.models.categories import Category
 
-class Category(UUIDModel):
-    name = models.CharField(max_length=255, unique=True)
-    description = models.TextField(blank=True, null=True)
 
-    class Meta:
-        db_table = 'asp_category'
-        verbose_name = "Aspiration Category"
-        verbose_name_plural = "Aspiration Categories"
-
-    def __str__(self):
-        return f"{self.name}"
-    
 class Aspiration(UUIDModel):
     STATUS_CHOICES = [
         ('menunggu', 'Menunggu'),
@@ -38,8 +28,6 @@ class Aspiration(UUIDModel):
     status = models.CharField(max_length=50, choices=STATUS_CHOICES)
     title = models.CharField(max_length=255)
     description = models.TextField()
-    image = models.ImageField(upload_to='assets/aspiration/images', blank=True, null=True)
-    video = models.FileField(upload_to='assets/aspiration/videos', blank=True, null=True)
     
     def save(self, *args, **kwargs):
         if not self.report_id:
@@ -48,6 +36,7 @@ class Aspiration(UUIDModel):
         
     def __str__(self):
         return f"{self.report_id} ({self.title})"
+    
     
 class AspirationProgress(UUIDModel):
     admin = models.ForeignKey(
@@ -71,15 +60,18 @@ class AspirationProgress(UUIDModel):
         admin_name = self.admin.email if self.admin else "System"
         return f"{self.aspiration.report_id} - {self.status} (By: {admin_name})"
     
-class Notification(UUIDModel):
-    user = models.ForeignKey(CoreUser, on_delete=models.CASCADE, related_name='notifications', db_column='user_id')
-    aspiration = models.ForeignKey(Aspiration, on_delete=models.CASCADE, related_name='notifications')
-    message = models.TextField()
-    is_read = models.BooleanField(default=False)
 
-    class Meta:
-        db_table = 'asp_notification'
-        verbose_name = "Aspiration Notification"
-
-    def __str__(self):
-        return f"{self.user.email}: {'Read' if self.is_read else 'Unread'}"
+class AspirationFile(UUIDModel):
+    aspiration = models.ForeignKey(
+        Aspiration, 
+        related_name='attachments', 
+        on_delete=models.CASCADE
+    )
+    progress = models.ForeignKey(
+        AspirationProgress, 
+        related_name='progress_attachments', 
+        on_delete=models.CASCADE,
+        null=True, 
+        blank=True
+    )
+    file = models.FileField(upload_to='aspiration/attachments/')
