@@ -83,7 +83,7 @@ class MeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CoreUser
-        fields = ['id', 'email', 'is_staff', 'profile', 'created_at']
+        fields = ['id', 'email', 'image', 'is_staff', 'profile', 'created_at']
         read_only_fields = ['email', 'is_staff', 'created_at']
 
     def get_profile(self, obj):
@@ -92,3 +92,40 @@ class MeSerializer(serializers.ModelSerializer):
         if hasattr(obj, 'admin_profile'):
             return AdminProfileSerializer(obj.admin_profile).data
         return None
+
+    def update(self, instance, validated_data):
+        profile_data = self.context['request'].data.get('profile')
+        
+        instance.image = validated_data.get('image', instance.image)
+        instance.save()
+
+        if profile_data:
+            if hasattr(instance, 'student_profile'):
+                student_serializer = StudentProfileSerializer(
+                    instance.student_profile, 
+                    data=profile_data, 
+                    partial=True
+                )
+                if student_serializer.is_valid(raise_exception=True):
+                    student_serializer.save()
+            
+            elif hasattr(instance, 'admin_profile'):
+                admin_serializer = AdminProfileSerializer(
+                    instance.admin_profile, 
+                    data=profile_data, 
+                    partial=True
+                )
+                if admin_serializer.is_valid(raise_exception=True):
+                    admin_serializer.save()
+
+        return instance
+    
+class ChangePasswordSerializer(serializers.Serializer):
+    old_password = serializers.CharField(required=True)
+    new_password = serializers.CharField(required=True, min_length=6)
+
+    def validate_old_password(self, value):
+        user = self.context['request'].user
+        if not user.check_password(value):
+            raise serializers.ValidationError("Password lama salah.")
+        return value

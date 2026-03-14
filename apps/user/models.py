@@ -30,6 +30,7 @@ class CustomUserManager(BaseUserManager):
 class CoreUser(AbstractUser, UUIDModel):
     username = None 
     email = models.EmailField(_('email address'), unique=True)
+    image = models.ImageField(upload_to='assets/user/images', blank=True, null=True)
     date_joined = None
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

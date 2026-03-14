@@ -2,7 +2,7 @@ from rest_framework import generics
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework.permissions import IsAuthenticated
 
-from apps.user.serializers import MeSerializer
+from apps.user.serializers import MeSerializer, ChangePasswordSerializer
 from utils.response import response_success, response_error 
 
 class MyProfileView(generics.RetrieveUpdateAPIView):
@@ -36,3 +36,30 @@ class MyProfileView(generics.RetrieveUpdateAPIView):
             message="Gagal memperbarui profil, mohon periksa input Anda.",
             errors=serializer.errors
         )
+        
+class ChangePasswordView(generics.UpdateAPIView):
+    serializer_class = ChangePasswordSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self):
+        return self.request.user
+
+    def update(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        
+        if serializer.is_valid():
+            user = self.get_object()
+            
+            user.set_password(serializer.validated_data['new_password'])
+            user.save()
+            
+            try:
+                request.user.auth_token.delete()
+            except (AttributeError, Exception):
+                pass
+
+            return response_success(
+                message="Password berhasil diperbarui. Silakan login kembali."
+            )
+        
+        return response_error(message="Gagal ganti password", errors=serializer.errors)

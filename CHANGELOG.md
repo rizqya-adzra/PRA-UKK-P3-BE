@@ -23,3 +23,7 @@
 ### V1.0.5
 - modified views (aspirations, categories, notifications) and urls in ./apps/aspiration/
 - added and modified serializers (aspirations, categories, notifications) in ./apps/aspiration/
+
+### V1.0.6
+- added change password
+- modified Coreuser model to have image field
