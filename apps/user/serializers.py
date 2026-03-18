@@ -4,9 +4,35 @@ from django.db import transaction
 from rest_framework.validators import UniqueValidator
 from .models import CoreUser, CoreStudent, CoreAdmin
 
+from rest_framework import serializers
+from rest_framework.validators import UniqueValidator
+from django.db import transaction
+
+
 class StudentRegisterSerializer(serializers.ModelSerializer):
-    nis = serializers.IntegerField(required=True)
-    name = serializers.CharField(max_length=255, required=False, allow_blank=True)
+    nis = serializers.IntegerField(
+        required=True,
+        validators=[
+            UniqueValidator(
+                queryset=CoreStudent.objects.all(),
+                message='NIS ini sudah terdaftar.'
+            )
+        ],
+        error_messages={
+            'required': 'NIS wajib diisi.',
+            'null': 'NIS tidak boleh kosong.',
+            'invalid': 'NIS harus berupa angka.'
+        }
+    )
+    
+    name = serializers.CharField(
+        max_length=255, 
+        required=False, 
+        allow_blank=True,
+        error_messages={
+            'max_length': 'Nama terlalu panjang (maksimal 255 karakter).'
+        }
+    )
     
     password = serializers.CharField(
         write_only=True,
@@ -31,6 +57,7 @@ class StudentRegisterSerializer(serializers.ModelSerializer):
                 ],
                 'error_messages': {
                     'required': 'Email wajib diisi.',
+                    'blank': 'Email tidak boleh kosong.',
                     'invalid': 'Format email salah.'
                 }
             },
@@ -41,7 +68,6 @@ class StudentRegisterSerializer(serializers.ModelSerializer):
         name = validated_data.pop('name', None)
         email = validated_data.get('email')
         
-        name = validated_data.pop('name', None)
         if not name:
             name = email.split('@')[0]
 
@@ -54,17 +80,49 @@ class StudentRegisterSerializer(serializers.ModelSerializer):
                 name=name,
             )
         return user
+    
+    def validate(self, data):
+        password = data.get('password')
+        confirm_password = self.initial_data.get('confirm_password')
+
+        if password != confirm_password:
+            raise serializers.ValidationError({
+                "confirm_password": "Konfirmasi password tidak cocok."
+            })
+        return data
 
 
 class LoginSerializer(serializers.Serializer):
-    email = serializers.EmailField(error_messages={'required': 'Email wajib diisi.'})
-    password = serializers.CharField(write_only=True, error_messages={'required': 'Password wajib diisi.'})
+    email = serializers.EmailField(
+        error_messages={
+            'required': 'Email wajib diisi.',
+            'blank': 'Email wajib diisi.',
+            'invalid': 'Format email tidak valid.'
+        }
+    )
+    password = serializers.CharField(
+        write_only=True, 
+        error_messages={
+            'required': 'Password wajib diisi.',
+            'blank': 'Password wajib diisi.'
+        }
+    )
 
     def validate(self, data):
-        user = authenticate(**data)
-        if user and user.is_active:
-            return user
-        raise serializers.ValidationError("Email atau password salah.")
+        email = data.get('email')
+        password = data.get('password')
+
+        if email and password:
+            user = authenticate(username=email, password=password) 
+            if not user:
+                raise serializers.ValidationError({"detail": "Email atau password salah."})
+            
+            if not user.is_active:
+                raise serializers.ValidationError({"detail": "Akun ini tidak aktif."})
+        else:
+            raise serializers.ValidationError({"detail": "Email dan password wajib diisi."})
+
+        return user
 
 
 class StudentProfileSerializer(serializers.ModelSerializer):

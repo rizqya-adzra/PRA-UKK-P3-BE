@@ -43,7 +43,8 @@ class LoginView(generics.GenericAPIView):
                 data={
                     "id": user.id,
                     "email": user.email,
-                    "token": token.key
+                    "token": token.key,
+                    "is_staff": user.is_staff
                 }
             )
         return response_error(

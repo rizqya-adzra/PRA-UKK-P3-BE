@@ -31,3 +31,7 @@
 ### V1.0.7
 - modified models to folder in ./apps/aspiration/
 - added AspirationFile model for user to upload attachment in ./apps/aspiration/
+
+### V1.0.8
+- modified serializers to folder in ./apps/user/serializers.py
+- added AspirationStats view in ./apps/aspiration/views/aspiration.py

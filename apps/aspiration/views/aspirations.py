@@ -1,3 +1,4 @@
+from rest_framework.views import APIView
 from rest_framework import generics, status, permissions
 from django.db import transaction
 from utils.response import response_success, response_error
@@ -160,3 +161,26 @@ class AspirationProgressDetailUpdateDestroyView(generics.RetrieveUpdateDestroyAP
             return response_success(message="Progres berhasil dihapus")
         except Exception as e:
             return response_error(message="Progres tidak ditemukan atau gagal dihapus", status_code=status.HTTP_404_NOT_FOUND)
+        
+
+class AspirationStatsView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        user = request.user
+
+        if user.is_staff:
+            base_query = Aspiration.objects.all()
+        else:
+            base_query = Aspiration.objects.filter(user=user)
+
+        stats = {
+            "total": base_query.count(),
+            "selesai": base_query.filter(status='selesai').count(),
+            "proses": base_query.filter(status='proses').count(),
+        }
+
+        return response_success(
+            data=stats,
+            message="Berhasil mengambil statistik"
+        )
