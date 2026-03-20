@@ -42,3 +42,8 @@
 ### V1.0.10
 - added filter.py in aspiration app
 - added pagination in ./apps/aspiration/views
+
+### V1.0.11
+- added export excel
+- added export pdf
+- added templates for pdf

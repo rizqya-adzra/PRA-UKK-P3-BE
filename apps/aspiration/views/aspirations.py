@@ -10,6 +10,67 @@ from apps.aspiration.models import Aspiration, AspirationProgress
 from apps.aspiration.serializers import AspirationSerializer, AspirationProgressSerializer
 from apps.aspiration.filters import AspirationFilter
 
+import openpyxl
+from xhtml2pdf import pisa
+from django.http import HttpResponse
+from django.template.loader import get_template
+
+
+def generate_excel_response(queryset, filename="Data_Aspirasi.xlsx"):
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Aspirasi"
+
+    headers = ['Report ID', 'Judul', 'Kategori', 'Status', 'Tanggal Dibuat', 'Lokasi', 'Pengirim']
+    ws.append(headers)
+
+    for obj in queryset:
+        pengirim = obj.user.student_profile.name if hasattr(obj.user, 'student_profile') else obj.user.username
+        kategori = obj.category.name if getattr(obj, 'category', None) else "-"
+        status_display = obj.get_status_display() if hasattr(obj, 'get_status_display') else obj.status
+        tanggal = obj.created_at.strftime('%Y-%m-%d %H:%M') if obj.created_at else "-"
+
+        ws.append([
+            obj.report_id,
+            obj.title,
+            kategori,
+            status_display,
+            tanggal,
+            obj.location,
+            pengirim
+        ])
+
+    response = HttpResponse(
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    wb.save(response)
+    
+    return response
+
+def generate_detail_pdf_response(instance, request, filename="Detail_Aspirasi.pdf"):
+    template_path = 'pdf/aspiration_detail.html'
+    
+    context = {
+        'aspiration': instance,
+        'user': request.user,
+        'progress_updates': instance.progress_updates.all().order_by('-created_at') if hasattr(instance, 'progress_updates') else []
+    }
+    
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    
+    template = get_template(template_path)
+    html = template.render(context)
+    
+    pisa_status = pisa.CreatePDF(html, dest=response)
+    
+    if pisa_status.err:
+        return HttpResponse('Terjadi kesalahan saat generate PDF', status=500)
+        
+    return response
+
+
 class AspirationPagination(PageNumberPagination):
     page_size = 10              
     page_query_param = 'page'   
@@ -44,6 +105,12 @@ class AspirationListCreateView(generics.ListCreateAPIView):
     
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
+        
+        if request.query_params.get('export') == 'excel':
+            page = self.paginate_queryset(queryset)
+            data_to_export = page if page is not None else queryset
+            
+            return generate_excel_response(data_to_export, "List_Semua_Aspirasi.xlsx")
         
         page = self.paginate_queryset(queryset)
         
@@ -97,10 +164,17 @@ class AspirationDetailView(generics.RetrieveAPIView):
     def retrieve(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
+            
+            if request.query_params.get('export') == 'pdf':
+                filename = f"Bukti_Aspirasi_{instance.report_id}.pdf"
+                return generate_detail_pdf_response(instance, request, filename)
+
             serializer = self.get_serializer(instance)
             return response_success(message="Detail aspirasi ditemukan", data=serializer.data)
+            
         except Exception as e:
-            return response_error(message="Aspirasi tidak ditemukan", status_code=status.HTTP_404_NOT_FOUND)
+            print(f"Error di AspirationDetailView: {e}") 
+            return response_error(message="Aspirasi tidak ditemukan atau terjadi kesalahan", status_code=status.HTTP_404_NOT_FOUND)
 
 
 class AspirationUpdateDestroyView(generics.UpdateAPIView, generics.DestroyAPIView):
@@ -266,13 +340,24 @@ class AspirationHistoryListView(generics.ListAPIView):
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
         
+        if request.query_params.get('export') == 'excel':
+            page = self.paginate_queryset(queryset)
+            data_to_export = page if page is not None else queryset
+            return generate_excel_response(data_to_export, "Riwayat_Aspirasi.xlsx")
+        
         page = self.paginate_queryset(queryset)
         
         if page is not None:
             serializer = self.get_serializer(page, many=True)
+            
+            total_pages = self.paginator.page.paginator.num_pages
+            current_page = self.paginator.page.number
+            
             return response_success(
                 message="List riwayat Aspirasi", 
                 data=serializer.data,
+                current_page=current_page,
+                total_pages=total_pages
             )
 
         serializer = self.get_serializer(queryset, many=True)

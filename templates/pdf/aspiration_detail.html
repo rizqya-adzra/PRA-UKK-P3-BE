@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Detail Aspirasi</title>
+    <style>
+        @page { size: A4 portrait; margin: 2.5cm; }
+        body { font-family: Helvetica, sans-serif; font-size: 12px; color: #333; line-height: 1.5; }
+        
+        .header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px; }
+        .header h1 { margin: 0; font-size: 18px; text-transform: uppercase; }
+        .header p { margin: 5px 0 0 0; font-size: 11px; color: #555; }
+        
+        .section-title { font-weight: bold; font-size: 14px; margin-top: 20px; margin-bottom: 10px; border-bottom: 1px solid #ddd; padding-bottom: 5px; }
+        
+        .info-table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
+        .info-table td { padding: 6px; vertical-align: top; }
+        .info-table td.label { width: 30%; font-weight: bold; color: #555; }
+        
+        .desc-box { background-color: #f9f9f9; border: 1px solid #eee; padding: 15px; border-radius: 5px; text-align: justify; }
+        
+        .progress-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        .progress-table th, .progress-table td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+        .progress-table th { background-color: #f4f4f4; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Tanda Bukti Laporan Aspirasi</h1>
+        <p>Dicetak pada: {% now "d F Y H:i" %}</p>
+    </div>
+
+    <div class="section-title">Informasi Pelapor</div>
+    <table class="info-table">
+        <tr>
+            <td class="label">Nama Lengkap</td>
+            <td>: {{ aspiration.user.student_profile.name|default:aspiration.user.username }}</td>
+        </tr>
+        <tr>
+            <td class="label">NIS / Rombel / Rayon</td>
+            <td>: {{ aspiration.user.student_profile.nis|default:"-" }} / {{ aspiration.user.student_profile.rombel|default:"-" }} / {{ aspiration.user.student_profile.rayon|default:"-" }}</td>
+        </tr>
+    </table>
+
+    <div class="section-title">Detail Aspirasi</div>
+    <table class="info-table">
+        <tr>
+            <td class="label">Nomor Laporan (ID)</td>
+            <td>: <strong>{{ aspiration.report_id }}</strong></td>
+        </tr>
+        <tr>
+            <td class="label">Tanggal Dibuat</td>
+            <td>: {{ aspiration.created_at|date:"d F Y, H:i" }}</td>
+        </tr>
+        <tr>
+            <td class="label">Kategori</td>
+            <td>: {{ aspiration.category.name|default:"-" }}</td>
+        </tr>
+        <tr>
+            <td class="label">Status Saat Ini</td>
+            <td style="text-transform: uppercase; font-weight: bold;">: {{ aspiration.status }}</td>
+        </tr>
+        <tr>
+            <td class="label">Lokasi</td>
+            <td>: {{ aspiration.location|default:"-" }}</td>
+        </tr>
+        <tr>
+            <td class="label">Judul Aspirasi</td>
+            <td>: {{ aspiration.title }}</td>
+        </tr>
+    </table>
+
+    <div class="section-title">Deskripsi Laporan</div>
+    <div class="desc-box">
+        {{ aspiration.description|linebreaksbr }}
+    </div>
+
+    {% if progress_updates %}
+    <div class="section-title">Riwayat Tindak Lanjut</div>
+    <table class="progress-table">
+        <thead>
+            <tr>
+                <th style="width: 20%;">Tanggal</th>
+                <th style="width: 20%;">Status</th>
+                <th style="width: 60%;">Keterangan</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for progress in progress_updates %}
+            <tr>
+                <td>{{ progress.created_at|date:"d/m/Y H:i" }}</td>
+                <td style="text-transform: capitalize;">{{ progress.status }}</td>
+                <td>{{ progress.description }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+    
+</body>
+</html>
