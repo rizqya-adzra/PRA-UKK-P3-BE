@@ -1,16 +1,40 @@
 from rest_framework.views import APIView
-from rest_framework import generics, status, permissions
+from rest_framework import generics, status, permissions, filters
 from django.db import transaction
+from django_filters.rest_framework import DjangoFilterBackend
 from apps.aspiration.models.aspirations import AspirationFile
 from utils.response import response_success, response_error
+from rest_framework.pagination import PageNumberPagination
 
 from apps.aspiration.models import Aspiration, AspirationProgress
 from apps.aspiration.serializers import AspirationSerializer, AspirationProgressSerializer
+from apps.aspiration.filters import AspirationFilter
+
+class AspirationPagination(PageNumberPagination):
+    page_size = 10              
+    page_query_param = 'page'   
+    page_size_query_param = 'page_size' 
+    max_page_size = 50
 
 
 class AspirationListCreateView(generics.ListCreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = AspirationSerializer
+    
+    pagination_class = AspirationPagination
+
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
+    filterset_class = AspirationFilter
+    
+    search_fields = [
+        'user__student_profile__name',
+        'user__student_profile__nis',
+        'user__student_profile__rombel',
+        'user__student_profile__rayon',
+        'report_id',     
+        'title',
+        'location'          
+    ]
 
     def get_queryset(self):
         user = self.request.user
@@ -19,14 +43,26 @@ class AspirationListCreateView(generics.ListCreateAPIView):
         return Aspiration.objects.filter(user=user).order_by('-created_at')
     
     def list(self, request, *args, **kwargs):
-        queryset = self.get_queryset()
+        queryset = self.filter_queryset(self.get_queryset())
         
-        if not queryset.exists():
-             return response_success(message="Belum ada data Aspirasi", data=[])
+        page = self.paginate_queryset(queryset)
+        
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            
+            total_pages = self.paginator.page.paginator.num_pages
+            current_page = self.paginator.page.number
+            
+            return response_success(
+                message="List semua data Aspirasi", 
+                data=serializer.data,
+                current_page=current_page,
+                total_pages=total_pages
+            )
 
         serializer = self.get_serializer(queryset, many=True)
         return response_success(message="List semua data Aspirasi", data=serializer.data)
-
+    
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
@@ -184,6 +220,10 @@ class AspirationStatsView(APIView):
         else:
             base_query = Aspiration.objects.filter(user=user)
 
+        filterset = AspirationFilter(request.GET, queryset=base_query)
+        if filterset.is_valid():
+            base_query = filterset.qs
+
         stats = {
             "total": base_query.count(),
             "selesai": base_query.filter(status='selesai').count(),
@@ -198,6 +238,21 @@ class AspirationStatsView(APIView):
 class AspirationHistoryListView(generics.ListAPIView):
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = AspirationSerializer
+    
+    pagination_class = AspirationPagination
+    
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
+    filterset_class = AspirationFilter
+    
+    search_fields = [
+        'user__student_profile__name',
+        'user__student_profile__nis',
+        'user__student_profile__rombel',
+        'user__student_profile__rayon',
+        'report_id',     
+        'title',
+        'location'          
+    ]
 
     def get_queryset(self):
         user = self.request.user
@@ -209,10 +264,16 @@ class AspirationHistoryListView(generics.ListAPIView):
         return Aspiration.objects.filter(user=user, status__in=target_statuses).order_by('-created_at')
     
     def list(self, request, *args, **kwargs):
-        queryset = self.get_queryset()
+        queryset = self.filter_queryset(self.get_queryset())
         
-        if not queryset.exists():
-             return response_success(message="Belum ada riwayat Aspirasi", data=[])
+        page = self.paginate_queryset(queryset)
+        
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return response_success(
+                message="List riwayat Aspirasi", 
+                data=serializer.data,
+            )
 
         serializer = self.get_serializer(queryset, many=True)
         return response_success(

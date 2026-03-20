@@ -38,3 +38,7 @@
 
 ### V1.0.9
 - modified aspirations app
+
+### V1.0.10
+- added filter.py in aspiration app
+- added pagination in ./apps/aspiration/views
