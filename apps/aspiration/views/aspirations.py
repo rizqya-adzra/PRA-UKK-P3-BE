@@ -1,6 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework import generics, status, permissions
 from django.db import transaction
+from apps.aspiration.models.aspirations import AspirationFile
 from utils.response import response_success, response_error
 
 from apps.aspiration.models import Aspiration, AspirationProgress
@@ -29,10 +30,19 @@ class AspirationListCreateView(generics.ListCreateAPIView):
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
-            serializer.save(user=self.request.user, status='menunggu')
+            aspiration = serializer.save(user=self.request.user, status='menunggu')
+            files = request.FILES.getlist('attachments')
+            if files:
+                for f in files:
+                    AspirationFile.objects.create(
+                        aspiration=aspiration, 
+                        file=f
+                    )
+            response_serializer = self.get_serializer(aspiration)
+            
             return response_success(
                 message="Aspirasi berhasil dikirim",
-                data=serializer.data,
+                data=response_serializer.data,
                 status_code=status.HTTP_201_CREATED
             )
         return response_error(message="Gagal mengirim aspirasi", errors=serializer.errors)
@@ -183,4 +193,29 @@ class AspirationStatsView(APIView):
         return response_success(
             data=stats,
             message="Berhasil mengambil statistik"
+        )
+        
+class AspirationHistoryListView(generics.ListAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = AspirationSerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        target_statuses = ['selesai', 'dibatalkan']
+        
+        if user.is_staff:
+            return Aspiration.objects.filter(status__in=target_statuses).order_by('-created_at')
+            
+        return Aspiration.objects.filter(user=user, status__in=target_statuses).order_by('-created_at')
+    
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        
+        if not queryset.exists():
+             return response_success(message="Belum ada riwayat Aspirasi", data=[])
+
+        serializer = self.get_serializer(queryset, many=True)
+        return response_success(
+            message="List riwayat Aspirasi (Selesai/Dibatalkan)", 
+            data=serializer.data
         )

@@ -12,11 +12,12 @@ Back End for P3 Pra-UKK project
 - v1.0.5 at 14th Mar 2026
 - v1.0.6 at 14th Mar 2026
 - v1.0.7 at 14th Mar 2026
-- v1.0.8 at 14th Mar 2026
+- v1.0.8 at 18th Mar 2026
+- v1.0.9 at 20th Mar 2026
 
 ## Features
 - Django REST API
 - using PostgreSQL
 
 ## View FrontEnd Repo
-- [PRA-UKK-P3-FE](-)
+- [PRA-UKK-P3-FE](https://github.com/rizqya-adzra/PRA-UKK-P3-FE)

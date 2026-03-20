@@ -1,5 +1,6 @@
 from rest_framework import generics, status, permissions
 from utils.response import response_success, response_error
+from rest_framework.authentication import TokenAuthentication
 
 from apps.aspiration.models import Notification
 from apps.aspiration.serializers import NotificationSerializer
@@ -30,6 +31,25 @@ class NotificationReadView(generics.GenericAPIView):
             return response_success(message="Notifikasi ditandai telah dibaca")
         except Notification.DoesNotExist:
             return response_error(message="Notifikasi tidak ditemukan", status_code=status.HTTP_404_NOT_FOUND)
+        
+        
+class NotificationReadAllView(generics.GenericAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    authentication_classes = [TokenAuthentication]
+    queryset = Notification.objects.all() 
+
+    def post(self, request):
+        notifications = Notification.objects.filter(user=request.user, is_read=False)
+        
+        updated_count = notifications.count()
+        
+        if updated_count == 0:
+            return response_success(message="Tidak ada notifikasi baru untuk ditandai")
+
+        notifications.update(is_read=True)
+
+        return response_success(message=f"{updated_count} notifikasi ditandai telah dibaca")
+        
         
 class NotificationDetailDestroyView(generics.RetrieveDestroyAPIView):
     permission_classes = [permissions.IsAuthenticated]

@@ -74,4 +74,4 @@ class AspirationFile(UUIDModel):
         null=True, 
         blank=True
     )
-    file = models.FileField(upload_to='aspiration/attachments/')
+    file = models.FileField(upload_to='assets/aspiration/attachments/')
