@@ -99,9 +99,10 @@ class AspirationListCreateView(generics.ListCreateAPIView):
 
     def get_queryset(self):
         user = self.request.user
+        queryset = Aspiration.objects.select_related('user', 'user__student_profile')
         if user.is_staff:
-            return Aspiration.objects.all().order_by('-created_at')
-        return Aspiration.objects.filter(user=user).order_by('-created_at')
+            return queryset.all().order_by('-created_at')
+        return queryset.filter(user=user).order_by('-created_at')
     
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
@@ -234,6 +235,15 @@ class AspirationProgressListCreateView(generics.ListCreateAPIView):
                 aspiration.status = progress.status
                 aspiration.save()
                 
+                files = request.FILES.getlist('attachments')
+                if files:
+                    for f in files:
+                        AspirationFile.objects.create(
+                            aspiration=aspiration,
+                            progress=progress,
+                            file=f
+                        )
+                
             return response_success(
                 message="Status aspirasi berhasil diperbarui",
                 data=serializer.data,
@@ -245,7 +255,7 @@ class AspirationProgressListCreateView(generics.ListCreateAPIView):
 class AspirationProgressDetailUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [permissions.IsAdminUser]
     serializer_class = AspirationProgressSerializer
-    queryset = AspirationProgress.objects.all()
+    queryset = AspirationProgress.objects.all().order_by('-created_at')
 
     def retrieve(self, request, *args, **kwargs):
         try:
@@ -302,11 +312,35 @@ class AspirationStatsView(APIView):
             "total": base_query.count(),
             "selesai": base_query.filter(status='selesai').count(),
             "proses": base_query.filter(status='proses').count(),
+            "menunggu": base_query.filter(status='menunggu').count(),
         }
 
         return response_success(
             data=stats,
             message="Berhasil mengambil statistik"
+        )
+        
+class AspirationCategoryStatsView(APIView):
+    permission_classes = [permissions.IsAdminUser]
+    
+    def get(self, request, *args, **kwargs):
+        base_query = Aspiration.objects.all()        
+
+        filterset = AspirationFilter(request.GET, queryset=base_query)
+        if filterset.is_valid():
+            base_query = filterset.qs
+            
+        stats = {
+            "fasilitas": base_query.filter(category="bea0bfff-b4a7-4dae-a8a3-78ea6756e703").count(),
+            "lingkungan": base_query.filter(category="d4b3f29e-0995-4709-9825-0ca48a87dbb0").count(),
+            "pendidikan": base_query.filter(category="4a7b9e07-9a43-4426-9eef-74987aa467a5").count(),
+            "karakter": base_query.filter(category="3541c7b7-ec66-402f-bea1-6d2dc63752a7").count(),
+            "ibadah": base_query.filter(category="60180a56-2df6-4b2e-bb32-43844d7afb86").count(),
+        }
+        
+        return response_success(
+            data=stats,
+            message="Berhasil mengambil statistik kategori"
         )
         
 class AspirationHistoryListView(generics.ListAPIView):
@@ -331,11 +365,12 @@ class AspirationHistoryListView(generics.ListAPIView):
     def get_queryset(self):
         user = self.request.user
         target_statuses = ['selesai', 'dibatalkan']
+        queryset = Aspiration.objects.select_related('user', 'user__student_profile')
         
         if user.is_staff:
             return Aspiration.objects.filter(status__in=target_statuses).order_by('-created_at')
             
-        return Aspiration.objects.filter(user=user, status__in=target_statuses).order_by('-created_at')
+        return queryset.objects.filter(user=user, status__in=target_statuses).order_by('-created_at')
     
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())

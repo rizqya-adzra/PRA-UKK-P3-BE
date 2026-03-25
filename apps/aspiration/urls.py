@@ -1,5 +1,5 @@
 from django.urls import path
-from apps.aspiration.views.aspirations import AspirationHistoryListView, AspirationStatsView, AspirationUpdateDestroyView, AspirationProgressDetailUpdateDestroyView, AspirationListCreateView, AspirationDetailView, AspirationProgressListCreateView
+from apps.aspiration.views.aspirations import AspirationHistoryListView, AspirationStatsView, AspirationUpdateDestroyView, AspirationProgressDetailUpdateDestroyView, AspirationListCreateView, AspirationDetailView, AspirationProgressListCreateView, AspirationCategoryStatsView
 from apps.aspiration.views.categories import CategoryListView, CategoryCreateView, CategoryDetailUpdateDestroyView
 from apps.aspiration.views.notifications import NotificationListView, NotificationReadAllView, NotificationReadView, NotificationDetailDestroyView    
 from django.views.decorators.csrf import csrf_exempt
@@ -15,6 +15,7 @@ urlpatterns = [
     path('aspiration/progress/', AspirationProgressListCreateView.as_view(), name='progress-list-create'),
     path('aspiration/progress/<uuid:pk>/manage/', AspirationProgressDetailUpdateDestroyView.as_view(), name='progress-detail-manage'),
     path('aspiration/stats/', AspirationStatsView.as_view(), name='aspiration-stats'),
+    path('aspiration/category-stats/', AspirationCategoryStatsView.as_view(), name='aspiration-category-stats'),
     path('aspiration/history/', AspirationHistoryListView.as_view(), name='aspiration-history'),
     
     path('aspiration/notifications/', NotificationListView.as_view(), name='notification-list'),

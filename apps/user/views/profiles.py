@@ -1,9 +1,11 @@
 from rest_framework import generics
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
 
 from apps.user.serializers import MeSerializer, ChangePasswordSerializer
+from apps.user.models import CoreUser as User
 from utils.response import response_success, response_error 
+
 
 class MyProfileView(generics.RetrieveUpdateAPIView):
     permission_classes = [IsAuthenticated]
@@ -37,6 +39,7 @@ class MyProfileView(generics.RetrieveUpdateAPIView):
             errors=serializer.errors
         )
         
+        
 class ChangePasswordView(generics.UpdateAPIView):
     serializer_class = ChangePasswordSerializer
     permission_classes = [IsAuthenticated]
@@ -63,3 +66,33 @@ class ChangePasswordView(generics.UpdateAPIView):
             )
         
         return response_error(message="Gagal ganti password", errors=serializer.errors)
+    
+    
+class UserListView(generics.ListAPIView):
+    permission_classes = [IsAuthenticated, IsAdminUser] 
+    
+    serializer_class = MeSerializer 
+    
+    queryset = User.objects.all().order_by('-created_at')
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            total_pages = self.paginator.page.paginator.num_pages
+            current_page = self.paginator.page.number
+            
+            return response_success(
+                message="Berhasil mengambil data semua pengguna",
+                data=serializer.data,
+                current_page=current_page,
+                total_pages=total_pages
+            )
+
+        serializer = self.get_serializer(queryset, many=True)
+        return response_success(
+            message="Berhasil mengambil data semua pengguna",
+            data=serializer.data
+        )

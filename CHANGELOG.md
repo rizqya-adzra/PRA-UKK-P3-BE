@@ -47,3 +47,7 @@
 - added export excel
 - added export pdf
 - added templates for pdf
+
+### V1.0.12
+- added category stats
+- modified profile user to be able to update image
