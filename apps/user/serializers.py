@@ -187,3 +187,30 @@ class ChangePasswordSerializer(serializers.Serializer):
         if not user.check_password(value):
             raise serializers.ValidationError("Password lama salah.")
         return value
+    
+class UserAspirationRankingSerializer(serializers.ModelSerializer):
+    name = serializers.SerializerMethodField()
+    nis = serializers.SerializerMethodField()
+    rombel = serializers.SerializerMethodField()
+    aspiration_count = serializers.IntegerField(read_only=True)
+
+    class Meta:
+        model = CoreUser
+        fields = ['id', 'email', 'name', 'nis', 'rombel', 'image', 'aspiration_count']
+
+    def get_name(self, obj):
+        if hasattr(obj, 'student_profile') and obj.student_profile:
+            return obj.student_profile.name
+        if hasattr(obj, 'admin_profile') and obj.admin_profile:
+            return obj.admin_profile.name
+        return obj.email.split('@')[0]
+
+    def get_nis(self, obj):
+        if hasattr(obj, 'student_profile') and obj.student_profile:
+            return obj.student_profile.nis
+        return None
+
+    def get_rombel(self, obj):
+        if hasattr(obj, 'student_profile') and obj.student_profile:
+            return obj.student_profile.rombel
+        return None

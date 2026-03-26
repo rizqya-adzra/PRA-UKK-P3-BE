@@ -1,8 +1,9 @@
 from rest_framework import generics
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
+from django.db.models import Count
 
-from apps.user.serializers import MeSerializer, ChangePasswordSerializer
+from apps.user.serializers import MeSerializer, ChangePasswordSerializer, UserAspirationRankingSerializer
 from apps.user.models import CoreUser as User
 from utils.response import response_success, response_error 
 
@@ -94,5 +95,39 @@ class UserListView(generics.ListAPIView):
         serializer = self.get_serializer(queryset, many=True)
         return response_success(
             message="Berhasil mengambil data semua pengguna",
+            data=serializer.data
+        )
+        
+class UserAspirationRankingView(generics.ListAPIView):
+    permission_classes = [IsAuthenticated] 
+    serializer_class = UserAspirationRankingSerializer 
+
+    def get_queryset(self):
+        return User.objects.annotate(
+            aspiration_count=Count('asp_aspirations')
+        ).filter(
+            aspiration_count__gt=0, 
+            is_staff=False 
+        ).order_by('-aspiration_count')
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            total_pages = self.paginator.page.paginator.num_pages
+            current_page = self.paginator.page.number
+            
+            return response_success(
+                message="Berhasil mengambil peringkat aspirasi pengguna",
+                data=serializer.data,
+                current_page=current_page,
+                total_pages=total_pages
+            )
+
+        serializer = self.get_serializer(queryset, many=True)
+        return response_success(
+            message="Berhasil mengambil peringkat aspirasi pengguna",
             data=serializer.data
         )

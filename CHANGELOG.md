@@ -51,3 +51,6 @@
 ### V1.0.12
 - added category stats
 - modified profile user to be able to update image
+
+### V1.0.13
+- added user ranking

@@ -17,6 +17,7 @@ Back End for P3 Pra-UKK project
 - v1.0.10 at 21th Mar 2026
 - v1.0.11 at 21th Mar 2026
 - v1.0.12 at 25th Mar 2026
+- v1.0.13 at 26th Mar 2026
 
 ## Features
 - Django REST API

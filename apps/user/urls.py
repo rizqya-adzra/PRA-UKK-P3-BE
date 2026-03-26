@@ -1,6 +1,6 @@
 from django.urls import path
 from apps.user.views.authentications import RegisterView, LoginView, LogoutView
-from apps.user.views.profiles import ChangePasswordView, MyProfileView, UserListView
+from apps.user.views.profiles import ChangePasswordView, MyProfileView, UserListView, UserAspirationRankingView
 
 urlpatterns = [
     path('auth/register/', RegisterView.as_view(), name='register'),
@@ -10,4 +10,5 @@ urlpatterns = [
     path('auth/change-password/', ChangePasswordView.as_view(), name='change-password'),
 
     path('user/list/', UserListView.as_view(), name='user-list'),
+    path('user/ranking/', UserAspirationRankingView.as_view(), name='user-ranking'),
 ]
