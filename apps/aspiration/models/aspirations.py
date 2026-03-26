@@ -3,6 +3,7 @@ from apps.user.models import CoreUser
 from utils.models import UUIDModel
 from utils.report_id import generate_report_id
 from apps.aspiration.models.categories import Category
+from apps.aspiration.models.locations import Location
 
 
 class Aspiration(UUIDModel):
@@ -24,7 +25,7 @@ class Aspiration(UUIDModel):
         db_column='user_id'
     )
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, related_name='aspirations')
-    location = models.CharField(max_length=255)
+    location = models.ForeignKey(Location, on_delete=models.SET_NULL, null=True, related_name='aspirations')
     status = models.CharField(max_length=50, choices=STATUS_CHOICES)
     title = models.CharField(max_length=255)
     description = models.TextField()

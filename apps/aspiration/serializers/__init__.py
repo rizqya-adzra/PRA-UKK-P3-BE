@@ -1,3 +1,4 @@
 from .aspirations import AspirationSerializer, AspirationProgressSerializer
 from .categories import CategorySerializer
+from .locations import LocationSerializer
 from .notifications import NotificationSerializer

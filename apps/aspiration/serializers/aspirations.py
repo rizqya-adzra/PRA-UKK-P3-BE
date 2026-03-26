@@ -1,7 +1,8 @@
 import os 
 from rest_framework import serializers
+from apps.aspiration.serializers.locations import LocationSerializer
 from apps.aspiration.serializers.categories import CategorySerializer
-from apps.aspiration.models import Category, Aspiration, AspirationProgress, AspirationFile
+from apps.aspiration.models import Location, Category, Aspiration, AspirationProgress, AspirationFile
 
 
 class AspirationFileSerializer(serializers.ModelSerializer):
@@ -55,6 +56,7 @@ class AspirationProgressSerializer(serializers.ModelSerializer):
 
 
 class AspirationSerializer(serializers.ModelSerializer):
+    location_detail = LocationSerializer(source='location', read_only=True)
     category_detail = CategorySerializer(source='category', read_only=True)
     progress_updates = AspirationProgressSerializer(many=True, read_only=True)
     
@@ -63,6 +65,17 @@ class AspirationSerializer(serializers.ModelSerializer):
     student_info = serializers.SerializerMethodField()
     student_image = serializers.ImageField(source='user.image', read_only=True)
 
+    location_id = serializers.PrimaryKeyRelatedField(
+        queryset=Location.objects.all(),
+        source='location',
+        required=True,
+        error_messages={
+            'required': 'Lokasi wajib dipilih.',
+            'null': 'Lokasi tidak boleh kosong.',
+            'does_not_exist': 'Lokasi yang dipilih tidak ditemukan.'
+        }
+    )
+    
     category_id = serializers.PrimaryKeyRelatedField(
         queryset=Category.objects.all(),
         source='category',
@@ -90,13 +103,6 @@ class AspirationSerializer(serializers.ModelSerializer):
             'blank': 'Deskripsi aspirasi tidak boleh kosong.'
         }
     )
-    location = serializers.CharField(
-        required=True,
-        error_messages={
-            'required': 'Lokasi kejadian wajib diisi.',
-            'blank': 'Lokasi kejadian tidak boleh kosong.'
-        }
-    )
     
     status_display = serializers.CharField(source='get_status_display', read_only=True)
     status_color = serializers.SerializerMethodField()
@@ -105,7 +111,8 @@ class AspirationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Aspiration
         fields = [
-            'id', 'report_id', 'student', 'student_image', 'student_info', 'title', 'description', 'location',
+            'id', 'report_id', 'student', 'student_image', 'student_info', 'title', 'description', 
+            'location_id', 'location_detail',
             'category_id', 'category_detail', 
             'attachments', 
             'status', 'status_display', 'status_color',

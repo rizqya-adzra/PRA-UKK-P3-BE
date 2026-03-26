@@ -1,3 +1,4 @@
 from .aspirations import AspirationListCreateView, AspirationDetailView, AspirationProgressListCreateView
 from .categories import CategoryListView
+from .locations import LocationListView
 from .notifications import NotificationListView, NotificationReadView

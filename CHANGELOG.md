@@ -54,3 +54,6 @@
 
 ### V1.0.13
 - added user ranking
+
+### V1.0.14
+- added locations model

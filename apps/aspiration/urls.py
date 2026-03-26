@@ -1,6 +1,7 @@
 from django.urls import path
 from apps.aspiration.views.aspirations import AspirationHistoryListView, AspirationStatsView, AspirationUpdateDestroyView, AspirationProgressDetailUpdateDestroyView, AspirationListCreateView, AspirationDetailView, AspirationProgressListCreateView, AspirationCategoryStatsView
 from apps.aspiration.views.categories import CategoryListView, CategoryCreateView, CategoryDetailUpdateDestroyView
+from apps.aspiration.views.locations import LocationListView, LocationCreateView, LocationDetailUpdateDestroyView
 from apps.aspiration.views.notifications import NotificationListView, NotificationReadAllView, NotificationReadView, NotificationDetailDestroyView    
 from django.views.decorators.csrf import csrf_exempt
 
@@ -8,6 +9,10 @@ urlpatterns = [
     path('aspiration/categories/', CategoryListView.as_view(), name='category-list'),
     path('aspiration/categories/create/', CategoryCreateView.as_view(), name='category-create'),
     path('aspiration/categories/<uuid:pk>/manage/', CategoryDetailUpdateDestroyView.as_view(), name='category-manage'),
+
+    path('aspiration/locations/', LocationListView.as_view(), name='location-list'),
+    path('aspiration/locations/create/', LocationCreateView.as_view(), name='location-create'),
+    path('aspiration/locations/<uuid:pk>/manage/', LocationDetailUpdateDestroyView.as_view(), name='location-manage'),
     
     path('aspiration/list/', AspirationListCreateView.as_view(), name='aspiration-list-create'),
     path('aspiration/list/<uuid:pk>/', AspirationDetailView.as_view(), name='aspiration-detail'),

@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Category, Aspiration, AspirationProgress, Notification, AspirationFile
+from .models import Category, Aspiration, AspirationProgress, Notification, AspirationFile, Location
 
 
 class AspirationFileInline(admin.TabularInline):
@@ -85,3 +85,9 @@ class NotificationAdmin(admin.ModelAdmin):
     list_display = ('user', 'aspiration', 'message', 'is_read', 'created_at')
     list_filter = ('is_read', 'created_at')
     search_fields = ('user__email', 'message')
+
+
+@admin.register(Location)
+class LocationAdmin(admin.ModelAdmin):
+    list_display = ('name', 'id', 'created_at')
+    search_fields = ('name',)
