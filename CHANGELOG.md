@@ -57,3 +57,7 @@
 
 ### V1.0.14
 - added locations model
+
+### V1.0.15
+- added seeder command
+- fix export excel

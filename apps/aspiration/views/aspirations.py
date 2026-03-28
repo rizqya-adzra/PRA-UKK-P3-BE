@@ -27,6 +27,7 @@ def generate_excel_response(queryset, filename="Data_Aspirasi.xlsx"):
     for obj in queryset:
         pengirim = obj.user.student_profile.name if hasattr(obj.user, 'student_profile') else obj.user.username
         kategori = obj.category.name if getattr(obj, 'category', None) else "-"
+        lokasi = obj.location.name if getattr(obj, 'location', None) else "-"
         status_display = obj.get_status_display() if hasattr(obj, 'get_status_display') else obj.status
         tanggal = obj.created_at.strftime('%Y-%m-%d %H:%M') if obj.created_at else "-"
 
@@ -36,7 +37,7 @@ def generate_excel_response(queryset, filename="Data_Aspirasi.xlsx"):
             kategori,
             status_display,
             tanggal,
-            obj.location,
+            lokasi,
             pengirim
         ])
 
@@ -368,9 +369,9 @@ class AspirationHistoryListView(generics.ListAPIView):
         queryset = Aspiration.objects.select_related('user', 'user__student_profile')
         
         if user.is_staff:
-            return Aspiration.objects.filter(status__in=target_statuses).order_by('-created_at')
+            return queryset.filter(status__in=target_statuses).order_by('-created_at')
             
-        return queryset.objects.filter(user=user, status__in=target_statuses).order_by('-created_at')
+        return queryset.filter(user=user, status__in=target_statuses).order_by('-created_at')
     
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())

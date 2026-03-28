@@ -21,10 +21,15 @@ class AspirationFileSerializer(serializers.ModelSerializer):
     def get_file_type(self, obj):
         if not obj.file: 
             return None
+        
         ext = os.path.splitext(obj.file.name)[1].lower()
-        if ext in ['.jpg', '.jpeg', '.png', '.webp']: return 'image'
-        if ext in ['.mp4', '.mov']: return 'video'
-        if ext in ['.pdf', '.doc', '.docx']: return 'document'
+        if ext in ['.jpg', '.jpeg', '.png', '.webp']: 
+            return 'image'
+        if ext in ['.mp4', '.mov']: 
+            return 'video'
+        if ext == '.pdf': 
+            return 'pdf'
+        
         return 'other'
 
 

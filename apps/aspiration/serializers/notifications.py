@@ -22,7 +22,7 @@ class NotificationSerializer(serializers.ModelSerializer):
         return {
             "report_id": obj.aspiration.report_id,
             "name": obj.aspiration.title,
-            "location": obj.aspiration.location,
+            "location": obj.aspiration.location.name,
             "description": obj.aspiration.description,
             "category": obj.aspiration.category.name,
             "status": obj.aspiration.get_status_display(),
