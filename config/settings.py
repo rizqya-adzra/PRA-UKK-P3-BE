@@ -1,12 +1,24 @@
+import os
+import dj_database_url
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = 'django-insecure-c)y5-liq3oa*)dhd4@ikyti-e)ets3dfxn&_@z#cq3$aru5n6#'
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-c)y5-liq3oa*)dhd4@ikyti-e)ets3dfxn&_@z#cq3$aru5n6#')
 
-DEBUG = True
+DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+
+if not DEBUG:
+    CORS_ALLOW_ALL_ORIGINS = False
+    CORS_ALLOWED_ORIGINS = [
+        "https://aspiration-by-qya.vercel.app",
+    ]
+    CSRF_TRUSTED_ORIGINS = [
+        "https://aspiration-by-qya.vercel.app",
+        "https://aspiration-p3.onrender.com",
+    ]
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -31,6 +43,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -70,6 +83,13 @@ DATABASES = {
     }
 }
 
+if os.environ.get('DATABASE_URL'):
+    DATABASES['default'] = dj_database_url.config(
+        conn_max_age=600, 
+        conn_health_checks=True,
+        ssl_require=True 
+    )
+
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
@@ -85,18 +105,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-CORS_ALLOW_ALL_ORIGINS = True
-
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-]
-
-CSRF_TRUSTED_ORIGINS = [
-    'http://localhost:3000',
-    'http://127.0.0.1:3000',
-]
-
 AUTH_USER_MODEL = 'user.CoreUser'
 
 REST_FRAMEWORK = {
@@ -110,8 +118,6 @@ REST_FRAMEWORK = {
 
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.TokenAuthentication'
-        # 'rest_framework_simplejwt.authentication.JWTAuthentication', 
-        # 'rest_framework.authentication.SessionAuthentication', 
     ],
 
     'DEFAULT_FILTER_BACKENDS': [
@@ -131,3 +137,9 @@ USE_I18N = True
 USE_TZ = True
 
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles' 
+STORAGES = {
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
