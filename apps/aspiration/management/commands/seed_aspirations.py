@@ -3,36 +3,75 @@ import requests
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.core.files.base import ContentFile
-from apps.user.models import CoreUser
+
+from apps.user.models import CoreUser, CoreStudent, CoreAdmin
 from apps.aspiration.models.categories import Category
 from apps.aspiration.models.locations import Location
 from apps.aspiration.models.aspirations import Aspiration, AspirationProgress, AspirationFile
 
 class Command(BaseCommand):
-    help = "Seed database with 20 varied dummy Aspiration data"
+    help = "Seed database with Users (Student & Admin profiles) and 20 varied Aspiration data"
 
     def handle(self, *args, **kwargs):
         self.stdout.write("Cleaning old data...")
-        Aspiration.objects.all().delete() 
+        
+        AspirationProgress.objects.all().delete()
+        AspirationFile.objects.all().delete()
+        Aspiration.objects.all().delete()
+        
+        CoreUser.objects.filter(is_superuser=False).delete()
 
-        self.stdout.write("Seeding 20 diverse data...")
+        self.stdout.write("Seeding Users, Students, & Admins...")
 
         with transaction.atomic():
-            users = CoreUser.objects.filter(is_staff=False)
-            admins = CoreUser.objects.filter(is_staff=True)
+            users = []
+            rombels = ["PPLG XI-1", "PPLG XI-2", "PPLG XI-3", "PPLG XI-4"]
+            rayons = ["Cicurug 1", "Cicurug 2", "Ciawi 1", "Ciawi 2", "Tajur 1"]
+            
+            for i in range(1, 6):
+                email = f"siswa{i}@sekolah.id"
+                user, created = CoreUser.objects.get_or_create(
+                    email=email,
+                    defaults={'is_staff': False}
+                )
+                if created:
+                    user.set_password('password123')
+                    user.save()
+                    
+                    CoreStudent.objects.create(
+                        user=user,
+                        nis=120000 + i, 
+                        name=f"Siswa Dummy {i}",
+                        rombel=random.choice(rombels),
+                        rayon=random.choice(rayons)
+                    )
+                users.append(user)
 
-            if not users.exists() or not admins.exists():
-                self.stdout.write(self.style.ERROR("Error: Butuh setidaknya 1 User biasa dan 1 Admin di database."))
-                return
+            admins = []
+            for i in range(1, 3):
+                email = f"admin{i}@sekolah.id"
+                admin, created = CoreUser.objects.get_or_create(
+                    email=email,
+                    defaults={'is_staff': True}
+                )
+                if created:
+                    admin.set_password('admin123')
+                    admin.save()
+                    
+                    CoreAdmin.objects.create(
+                        user=admin,
+                        name=f"Admin Dummy {i}"
+                    )
+                admins.append(admin)
 
-            # Categories & Locations
+            self.stdout.write(self.style.SUCCESS(f"Created {len(users)} Students and {len(admins)} Admins."))
+
             categories_data = ['Fasilitas', 'Lingkungan', 'Pendidikan', 'Karakter', 'Ibadah', 'Kesehatan']
             category_objs = [Category.objects.get_or_create(name=name)[0] for name in categories_data]
 
             locations_data = ['G. Padjajaran 1', 'G. Siliwangi', 'Lapangan Utama', 'Balai Krida', 'Perpustakaan', 'Kantin', 'Masjid', 'UKS']
             location_objs = [Location.objects.get_or_create(name=name)[0] for name in locations_data]
 
-            # Variasi Judul & Deskripsi agar lebih realistis
             aspiration_samples = [
                 {"title": "Keran Air Wudhu Bocor", "desc": "Keran di area masjid sebelah kanan bocor terus menerus, air jadi terbuang sia-sia."},
                 {"title": "Lampu Kelas Redup", "desc": "Beberapa lampu di ruang kelas mulai berkedip dan redup, mengganggu konsentrasi belajar."},
@@ -58,11 +97,12 @@ class Command(BaseCommand):
             
             statuses = ['menunggu', 'proses', 'selesai', 'dibatalkan']
 
+            self.stdout.write("Seeding 20 Aspirations with images...")
+
             for i in range(20):  
                 user = random.choice(users)
                 status = random.choice(statuses)
-                # Ambil data dari list samples (pastikan tidak index out of range)
-                sample = aspiration_samples[i] if i < len(aspiration_samples) else aspiration_samples[0]
+                sample = aspiration_samples[i]
                 
                 aspiration = Aspiration.objects.create(
                     user=user,
@@ -73,33 +113,29 @@ class Command(BaseCommand):
                     description=sample["desc"]
                 )
                 
-                # Download gambar
                 try:
-                    # Random ID agar gambar berbeda tiap baris
                     response = requests.get(f"https://picsum.photos/id/{random.randint(1, 100)}/800/600", timeout=5)
                     if response.status_code == 200:
-                        dummy_content = ContentFile(response.content, name=f"aspiration_{aspiration.report_id}.jpg")
+                        dummy_content = ContentFile(response.content, name=f"aspiration_{aspiration.id}.jpg")
                         AspirationFile.objects.create(aspiration=aspiration, file=dummy_content)
-                except Exception as e:
-                    self.stdout.write(self.style.WARNING(f"Gagal download gambar untuk {aspiration.report_id}"))
+                except Exception:
                     AspirationFile.objects.create(aspiration=aspiration, file=ContentFile(b"dummy", name="fallback.jpg"))
 
-                # Logika Progress
-                if status != 'menunggu':
-                    AspirationProgress.objects.create(
-                        aspiration=aspiration,
-                        admin=None,
-                        status='menunggu',
-                        description="Aspirasi berhasil diterima oleh sistem."
-                    )
+                AspirationProgress.objects.create(
+                    aspiration=aspiration,
+                    status='menunggu',
+                    description="Aspirasi berhasil diterima oleh sistem."
+                )
 
+                if status in ['proses', 'selesai', 'dibatalkan']:
+                    admin_user = random.choice(admins) 
+                    
                     if status in ['proses', 'selesai']:
-                        admin_user = random.choice(admins)
                         AspirationProgress.objects.create(
                             aspiration=aspiration,
                             admin=admin_user,
                             status='proses',
-                            description=f"Aspirasi sedang ditindaklanjuti oleh petugas terkait di {aspiration.location.name}."
+                            description=f"Sedang ditinjau oleh petugas di {aspiration.location.name}."
                         )
 
                     if status == 'selesai':
@@ -107,15 +143,14 @@ class Command(BaseCommand):
                             aspiration=aspiration,
                             admin=admin_user,
                             status='selesai',
-                            description="Laporan selesai dikerjakan. Terima kasih atas kepedulian Anda!"
+                            description="Laporan sudah selesai ditangani. Terima kasih!"
                         )
                     elif status == 'dibatalkan':
-                        admin_user = random.choice(admins)
                         AspirationProgress.objects.create(
                             aspiration=aspiration,
                             admin=admin_user,
                             status='dibatalkan',
-                            description="Aspirasi ditolak karena sudah pernah dilaporkan sebelumnya atau tidak sesuai kebijakan."
+                            description="Laporan dibatalkan/ditolak karena data tidak valid."
                         )
 
-            self.stdout.write(self.style.SUCCESS("Successfully seeded 20 unique Aspirations!"))
+            self.stdout.write(self.style.SUCCESS("Successfully seeded everything!"))
