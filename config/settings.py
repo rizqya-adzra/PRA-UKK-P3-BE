@@ -17,7 +17,7 @@ if not DEBUG:
     ]
     CSRF_TRUSTED_ORIGINS = [
         "https://aspiration-by-qya.vercel.app",
-        "https://aspiration-p3.onrender.com",
+        "https://pra-ukk-p3-be-production.up.railway.app",
     ]
 
 INSTALLED_APPS = [
