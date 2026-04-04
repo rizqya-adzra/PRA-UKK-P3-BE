@@ -95,7 +95,7 @@ class AspirationListCreateView(generics.ListCreateAPIView):
         'user__student_profile__rayon',
         'report_id',     
         'title',
-        'location'          
+        'location__name'          
     ]
 
     def get_queryset(self):
@@ -360,7 +360,7 @@ class AspirationHistoryListView(generics.ListAPIView):
         'user__student_profile__rayon',
         'report_id',     
         'title',
-        'location'          
+        'location__name'          
     ]
 
     def get_queryset(self):
