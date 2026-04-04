@@ -19,17 +19,17 @@ python manage.py seed_aspirations
 
 # 5. Buat Super Admin secara otomatis
 # Menggunakan shell script agar tidak error jika user sudah ada
-echo "Creating Superuser..."
+echo "Updating Superuser Password..."
 python manage.py shell << END
 from apps.user.models import CoreUser
 email = 'django@gmail.com'
-password = 'django'
+password = 'django' # Ganti sesukamu
 
-if not CoreUser.objects.filter(email=email).exists():
-    CoreUser.objects.create_superuser(email=email, password=password)
-    print(f"Superuser {email} created successfully.")
-else:
-    print(f"Superuser {email} already exists.")
+user, created = CoreUser.objects.get_or_create(email=email)
+user.set_password(password)
+user.is_superuser = True
+user.is_staff = True
+user.save()
+
+print(f"Password for {email} has been forced to update.")
 END
-
-echo "Build Process Completed!"
